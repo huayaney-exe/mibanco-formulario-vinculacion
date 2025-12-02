@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { useFormStore } from '@/lib/store';
 import { ProgressBar } from './ProgressBar';
 
@@ -25,11 +26,15 @@ export function WizardHeader({ currentStep }: WizardHeaderProps) {
       {/* Top bar with logo */}
       <div className="bg-[var(--mibanco-green)] px-4 py-3">
         <div className="max-w-2xl mx-auto flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-[var(--mibanco-yellow)] rounded-full flex items-center justify-center">
-              <span className="text-[var(--mibanco-green)] font-bold text-sm">M</span>
-            </div>
-            <span className="text-white font-semibold">MIBANCO</span>
+          <Link href="/" className="flex items-center">
+            <Image
+              src="/logo-dkbg-mb.svg"
+              alt="MIBANCO"
+              width={120}
+              height={40}
+              className="h-8 w-auto"
+              priority
+            />
           </Link>
           <span className="text-white/80 text-sm">Formulario de Vinculación</span>
         </div>

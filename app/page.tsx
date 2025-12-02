@@ -1,6 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { useFormStore } from '@/lib/store';
 import { Button } from '@/components/ui/Button';
@@ -38,15 +39,14 @@ export default function HomePage() {
       {/* Header */}
       <header className="bg-[var(--mibanco-green)] px-4 py-6">
         <div className="max-w-2xl mx-auto">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-[var(--mibanco-yellow)] rounded-full flex items-center justify-center">
-              <span className="text-[var(--mibanco-green)] font-bold text-xl">M</span>
-            </div>
-            <div>
-              <h1 className="text-white font-bold text-xl">MIBANCO</h1>
-              <p className="text-white/80 text-sm">Colombia</p>
-            </div>
-          </div>
+          <Image
+            src="/logo-dkbg-mb.svg"
+            alt="MIBANCO Colombia"
+            width={160}
+            height={50}
+            className="h-12 w-auto"
+            priority
+          />
         </div>
       </header>
 

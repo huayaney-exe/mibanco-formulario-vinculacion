@@ -148,7 +148,8 @@ export default function ResumenPage() {
   const handleGeneratePDF = async () => {
     setIsGeneratingPDF(true);
     try {
-      const html2canvas = (await import('html2canvas')).default;
+      // Use html2canvas-pro which supports modern color functions (lab, oklch, oklab)
+      const html2canvas = (await import('html2canvas-pro')).default;
       const { jsPDF } = await import('jspdf');
 
       if (!contentRef.current) {
@@ -157,14 +158,12 @@ export default function ResumenPage() {
 
       const element = contentRef.current;
 
-      // Generate canvas from HTML element
+      // Generate canvas directly - html2canvas-pro supports Tailwind v4's lab() colors
       const canvas = await html2canvas(element, {
         scale: 2,
         useCORS: true,
         logging: false,
         backgroundColor: '#ffffff',
-        width: element.scrollWidth,
-        height: element.scrollHeight,
       });
 
       const imgData = canvas.toDataURL('image/jpeg', 0.95);
