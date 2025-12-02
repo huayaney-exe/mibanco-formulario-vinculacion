@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useEffect, useState, useRef } from 'react';
+import { useState } from 'react';
 import { useFormStore } from '@/lib/store';
 import { WizardHeader } from '@/components/wizard/WizardHeader';
 import { Button } from '@/components/ui/Button';
@@ -101,9 +101,8 @@ function SummaryField({
 
 export default function ResumenPage() {
   const router = useRouter();
-  const { form, metadata } = useFormStore();
+  const { form } = useFormStore();
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
-  const contentRef = useRef<HTMLDivElement>(null);
 
   const {
     datosPersonales,
@@ -148,61 +147,9 @@ export default function ResumenPage() {
   const handleGeneratePDF = async () => {
     setIsGeneratingPDF(true);
     try {
-      // Use html2canvas-pro which supports modern color functions (lab, oklch, oklab)
-      const html2canvas = (await import('html2canvas-pro')).default;
-      const { jsPDF } = await import('jspdf');
-
-      if (!contentRef.current) {
-        throw new Error('Content reference not found');
-      }
-
-      const element = contentRef.current;
-
-      // Generate canvas directly - html2canvas-pro supports Tailwind v4's lab() colors
-      const canvas = await html2canvas(element, {
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        backgroundColor: '#ffffff',
-      });
-
-      const imgData = canvas.toDataURL('image/jpeg', 0.95);
-
-      // Create PDF with A4 dimensions
-      const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4',
-      });
-
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = pdf.internal.pageSize.getHeight();
-
-      // Calculate image dimensions to fit PDF width
-      const imgWidth = pdfWidth - 20; // 10mm margin on each side
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-
-      // Handle multi-page PDF
-      let heightLeft = imgHeight;
-      let position = 10; // Top margin
-      const pageContentHeight = pdfHeight - 20; // Account for margins
-
-      // First page
-      pdf.addImage(imgData, 'JPEG', 10, position, imgWidth, imgHeight);
-      heightLeft -= pageContentHeight;
-
-      // Additional pages if content is longer
-      while (heightLeft > 0) {
-        pdf.addPage();
-        position = 10 - (imgHeight - heightLeft); // Negative position to show next portion
-        pdf.addImage(imgData, 'JPEG', 10, position, imgWidth, imgHeight);
-        heightLeft -= pageContentHeight;
-      }
-
-      // Generate filename with date and document number
-      const date = new Date().toISOString().split('T')[0];
-      const docNum = datosPersonales.numeroDocumento || 'sin-documento';
-      pdf.save(`formulario-vinculacion-${docNum}-${date}.pdf`);
+      // Use the official PDF generator that creates the proper MIBANCO form
+      const { generateOfficialPDF } = await import('@/lib/pdf-generator');
+      generateOfficialPDF(form, datosPersonales.numeroDocumento || '');
     } catch (error) {
       console.error('Error generating PDF:', error);
       alert('Error al generar el PDF. Por favor intente de nuevo. Error: ' + (error as Error).message);
@@ -242,7 +189,7 @@ export default function ResumenPage() {
           </div>
 
           {/* Summary Content */}
-          <div ref={contentRef} className="space-y-6 bg-white">
+          <div className="space-y-6 bg-white">
             {/* Print Header */}
             <div className="hidden print:block text-center py-4 border-b-2 border-green-600">
               <h1 className="text-xl font-bold text-green-700">MIBANCO COLOMBIA S.A.</h1>
