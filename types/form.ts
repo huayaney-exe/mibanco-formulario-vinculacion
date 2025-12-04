@@ -282,6 +282,31 @@ export interface Autorizaciones {
   aceptaFondosGarantias: boolean;
 }
 
+// Firma digital del cliente
+export interface Firma {
+  dataUrl: string;           // Base64 PNG de la firma
+  fechaCaptura: string;      // ISO timestamp
+  dispositivoInfo?: string;  // User agent info
+}
+
+// Estado de gestión del formulario
+export type EstadoGestionType =
+  | 'borrador'
+  | 'firmado'
+  | 'enviado_validacion'
+  | 'validado'
+  | 'pendiente_jefe'
+  | 'aprobado'
+  | 'rechazado';
+
+export interface EstadoGestion {
+  estado: EstadoGestionType;
+  fechaFirma?: string;
+  fechaEnvioValidacion?: string;
+  fechaValidacion?: string;
+  numeroRadicacion?: string;
+}
+
 // Complete Form State
 export interface FormularioVinculacion {
   // Step 1
@@ -314,6 +339,10 @@ export interface FormularioVinculacion {
   evaluacionAmbiental: EvaluacionAmbiental;
   condicionEspecial: CondicionEspecial;
   autorizaciones: Autorizaciones;
+
+  // Firma y gestión
+  firmaCliente: Firma | null;
+  estadoGestion: EstadoGestion;
 }
 
 // Validation Warning (soft validation)

@@ -1,14 +1,16 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useFormStore } from '@/lib/store';
 import { WizardHeader } from '@/components/wizard/WizardHeader';
 import { StepNavigation } from '@/components/wizard/StepNavigation';
 import { SectionCard } from '@/components/form/SectionCard';
 import { Checkbox } from '@/components/ui/Checkbox';
 import { YesNoToggle } from '@/components/form/YesNoToggle';
+import { SignatureCanvas } from '@/components/form/SignatureCanvas';
 import { tipoDiscapacidadOptions } from '@/data/options';
+import { PenTool } from 'lucide-react';
 
 export default function Paso6Page() {
   const router = useRouter();
@@ -17,11 +19,13 @@ export default function Paso6Page() {
     setEvaluacionAmbiental,
     setCondicionEspecial,
     setAutorizaciones,
+    setFirmaCliente,
     setCurrentStep,
     markStepComplete,
   } = useFormStore();
 
-  const { evaluacionAmbiental, condicionEspecial, autorizaciones } = form;
+  const { evaluacionAmbiental, condicionEspecial, autorizaciones, firmaCliente } = form;
+  const [confirmaFirma, setConfirmaFirma] = useState(false);
 
   useEffect(() => {
     setCurrentStep(6);
@@ -47,6 +51,24 @@ export default function Paso6Page() {
     autorizaciones.autorizaTratamientoDatos &&
     autorizaciones.confirmaRecepcionInfo &&
     autorizaciones.aceptaCompromisoActualizacion;
+
+  // Check if signature is complete
+  const signatureComplete = firmaCliente !== null && confirmaFirma;
+
+  // Handle signature save
+  const handleSaveSignature = (dataUrl: string) => {
+    setFirmaCliente({
+      dataUrl,
+      fechaCaptura: new Date().toISOString(),
+      dispositivoInfo: typeof navigator !== 'undefined' ? navigator.userAgent : undefined,
+    });
+  };
+
+  // Handle signature clear
+  const handleClearSignature = () => {
+    setFirmaCliente(null);
+    setConfirmaFirma(false);
+  };
 
   return (
     <>
@@ -238,6 +260,59 @@ export default function Paso6Page() {
               </p>
             </div>
           </SectionCard>
+
+          {/* Firma del Cliente */}
+          <SectionCard
+            title="Firma del Cliente"
+            description="Por favor firme en el área indicada utilizando su dedo o mouse"
+          >
+            <div className="space-y-4">
+              {/* Resumen de lo que se está firmando */}
+              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                <div className="flex items-start gap-3">
+                  <PenTool className="w-5 h-5 text-green-600 mt-0.5" />
+                  <div>
+                    <h4 className="font-medium text-green-800 mb-1">Al firmar, declaro que:</h4>
+                    <ul className="text-sm text-green-700 space-y-1 list-disc list-inside">
+                      <li>La información proporcionada es verídica y completa</li>
+                      <li>Autorizo la consulta y reporte en centrales de riesgo</li>
+                      <li>Acepto el tratamiento de mis datos personales</li>
+                      <li>He leído y acepto los términos y condiciones del producto</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+
+              {/* Canvas de firma */}
+              <SignatureCanvas
+                onSave={handleSaveSignature}
+                onClear={handleClearSignature}
+                savedSignature={firmaCliente?.dataUrl}
+                disabled={!allAuthorizationsComplete}
+              />
+
+              {/* Confirmación de firma */}
+              {firmaCliente && (
+                <div className="border-t pt-4">
+                  <Checkbox
+                    label="Confirmo que esta es mi firma y acepto todas las declaraciones anteriores"
+                    checked={confirmaFirma}
+                    onChange={(e) => setConfirmaFirma(e.target.checked)}
+                  />
+                </div>
+              )}
+
+              {/* Mensaje si no se han completado las autorizaciones */}
+              {!allAuthorizationsComplete && (
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                  <p className="text-sm text-yellow-800">
+                    <strong>Nota:</strong> Debe aceptar todas las autorizaciones obligatorias antes
+                    de poder firmar.
+                  </p>
+                </div>
+              )}
+            </div>
+          </SectionCard>
         </div>
       </main>
 
@@ -246,6 +321,7 @@ export default function Paso6Page() {
         totalSteps={6}
         onNext={handleNext}
         nextLabel="Revisar y Finalizar"
+        isNextDisabled={!signatureComplete}
       />
     </>
   );

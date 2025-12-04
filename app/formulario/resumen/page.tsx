@@ -6,7 +6,8 @@ import { useFormStore } from '@/lib/store';
 import { WizardHeader } from '@/components/wizard/WizardHeader';
 import { Button } from '@/components/ui/Button';
 import { SectionCard } from '@/components/form/SectionCard';
-import { ChevronLeft, FileDown, Printer, CheckCircle, AlertTriangle } from 'lucide-react';
+import { GestionModal } from '@/components/form/GestionModal';
+import { ChevronLeft, FileDown, Printer, CheckCircle, AlertTriangle, Send, PenTool } from 'lucide-react';
 import { formatCurrency, formatDocument, formatPhone } from '@/lib/utils';
 
 // Labels for displaying values
@@ -101,8 +102,9 @@ function SummaryField({
 
 export default function ResumenPage() {
   const router = useRouter();
-  const { form } = useFormStore();
+  const { form, iniciarGestion } = useFormStore();
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+  const [showGestionModal, setShowGestionModal] = useState(false);
 
   const {
     datosPersonales,
@@ -124,6 +126,8 @@ export default function ResumenPage() {
     evaluacionAmbiental,
     condicionEspecial,
     autorizaciones,
+    firmaCliente,
+    estadoGestion,
   } = form;
 
   const isIndependiente = datosPersonales.ocupacion === 'independiente';
@@ -158,6 +162,16 @@ export default function ResumenPage() {
     }
   };
 
+  const handleIniciarGestion = () => {
+    setShowGestionModal(true);
+  };
+
+  const handleConfirmGestion = () => {
+    iniciarGestion();
+  };
+
+  const nombreCompleto = `${datosPersonales.primerNombre} ${datosPersonales.primerApellido}`.trim();
+
   return (
     <>
       <WizardHeader currentStep={6} />
@@ -171,6 +185,68 @@ export default function ResumenPage() {
               Revise la información antes de generar el documento PDF.
             </p>
           </div>
+
+          {/* Firma del Cliente - Vista Previa */}
+          {firmaCliente && (
+            <div className="mb-6 print:hidden">
+              <div className="bg-green-50 border border-green-200 rounded-xl p-4">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="bg-green-100 rounded-full p-2">
+                    <PenTool className="w-5 h-5 text-green-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-green-800">Firma Digital Registrada</h3>
+                    <p className="text-sm text-green-600">
+                      {new Date(firmaCliente.fechaCaptura).toLocaleString('es-CO')}
+                    </p>
+                  </div>
+                </div>
+                <div className="bg-white rounded-lg p-3 border border-green-200">
+                  <img
+                    src={firmaCliente.dataUrl}
+                    alt="Firma del cliente"
+                    className="max-h-[100px] mx-auto"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Botón Principal: Iniciar Gestión */}
+          {firmaCliente && estadoGestion.estado === 'firmado' && (
+            <div className="mb-6 print:hidden">
+              <Button
+                onClick={handleIniciarGestion}
+                className="w-full bg-green-600 hover:bg-green-700 py-4 text-lg font-semibold"
+              >
+                <Send className="w-5 h-5 mr-2" />
+                Iniciar Gestión
+              </Button>
+              <p className="text-sm text-gray-500 text-center mt-2">
+                Al iniciar la gestión, se enviará una validación biométrica al cliente
+              </p>
+            </div>
+          )}
+
+          {/* Estado de gestión en progreso */}
+          {estadoGestion.estado !== 'borrador' && estadoGestion.estado !== 'firmado' && (
+            <div className="mb-6 print:hidden">
+              <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                <div className="flex items-center gap-3">
+                  <CheckCircle className="w-6 h-6 text-blue-600" />
+                  <div>
+                    <h3 className="font-semibold text-blue-800">Gestión en Proceso</h3>
+                    <p className="text-sm text-blue-600">
+                      Número de radicación: {estadoGestion.numeroRadicacion}
+                    </p>
+                    <p className="text-xs text-blue-500 mt-1">
+                      Estado: {estadoGestion.estado.replace(/_/g, ' ').toUpperCase()}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Actions */}
           <div className="flex gap-3 mb-6 print:hidden">
@@ -653,6 +729,15 @@ export default function ResumenPage() {
           }
         }
       `}</style>
+
+      {/* Modal de Gestión */}
+      <GestionModal
+        isOpen={showGestionModal}
+        onClose={() => setShowGestionModal(false)}
+        onConfirm={handleConfirmGestion}
+        celular={datosPersonales.celular}
+        nombreCliente={nombreCompleto}
+      />
     </>
   );
 }

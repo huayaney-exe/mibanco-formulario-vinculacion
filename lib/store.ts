@@ -23,6 +23,8 @@ import type {
   EvaluacionAmbiental,
   CondicionEspecial,
   Autorizaciones,
+  Firma,
+  EstadoGestion,
 } from '@/types/form';
 
 // Initial states
@@ -226,6 +228,10 @@ const initialAutorizaciones: Autorizaciones = {
   aceptaFondosGarantias: false,
 };
 
+const initialEstadoGestion: EstadoGestion = {
+  estado: 'borrador',
+};
+
 // Store interface
 interface FormStore {
   // Form data
@@ -252,6 +258,11 @@ interface FormStore {
   setEvaluacionAmbiental: (data: Partial<EvaluacionAmbiental>) => void;
   setCondicionEspecial: (data: Partial<CondicionEspecial>) => void;
   setAutorizaciones: (data: Partial<Autorizaciones>) => void;
+
+  // Firma y gestión
+  setFirmaCliente: (firma: Firma | null) => void;
+  setEstadoGestion: (data: Partial<EstadoGestion>) => void;
+  iniciarGestion: () => string; // Retorna número de radicación
 
   // Navigation
   setCurrentStep: (step: number) => void;
@@ -291,6 +302,8 @@ export const useFormStore = create<FormStore>()(
         evaluacionAmbiental: initialEvaluacionAmbiental,
         condicionEspecial: initialCondicionEspecial,
         autorizaciones: initialAutorizaciones,
+        firmaCliente: null,
+        estadoGestion: initialEstadoGestion,
       },
       metadata: {
         currentStep: 1,
@@ -453,6 +466,42 @@ export const useFormStore = create<FormStore>()(
           },
         })),
 
+      // Firma y gestión
+      setFirmaCliente: (firma) =>
+        set((state) => ({
+          form: {
+            ...state.form,
+            firmaCliente: firma,
+            estadoGestion: firma
+              ? { ...state.form.estadoGestion, estado: 'firmado', fechaFirma: new Date().toISOString() }
+              : { ...state.form.estadoGestion, estado: 'borrador', fechaFirma: undefined },
+          },
+        })),
+
+      setEstadoGestion: (data) =>
+        set((state) => ({
+          form: {
+            ...state.form,
+            estadoGestion: { ...state.form.estadoGestion, ...data },
+          },
+        })),
+
+      iniciarGestion: () => {
+        const numeroRadicacion = `VIN-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 999999)).padStart(6, '0')}`;
+        set((state) => ({
+          form: {
+            ...state.form,
+            estadoGestion: {
+              ...state.form.estadoGestion,
+              estado: 'enviado_validacion',
+              fechaEnvioValidacion: new Date().toISOString(),
+              numeroRadicacion,
+            },
+          },
+        }));
+        return numeroRadicacion;
+      },
+
       // Navigation
       setCurrentStep: (step) =>
         set((state) => ({
@@ -524,6 +573,8 @@ export const useFormStore = create<FormStore>()(
             evaluacionAmbiental: initialEvaluacionAmbiental,
             condicionEspecial: initialCondicionEspecial,
             autorizaciones: initialAutorizaciones,
+            firmaCliente: null,
+            estadoGestion: initialEstadoGestion,
           },
           metadata: {
             currentStep: 1,

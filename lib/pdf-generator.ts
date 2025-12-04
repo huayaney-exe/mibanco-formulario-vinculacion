@@ -233,6 +233,7 @@ class PDFGenerator {
       evaluacionAmbiental,
       condicionEspecial,
       autorizaciones,
+      firmaCliente,
     } = form;
 
     // ========== PAGE 1 ==========
@@ -693,6 +694,30 @@ class PDFGenerator {
 
     // Fingerprint box for client
     this.pdf.rect(this.margin + sigBoxWidth - 18, this.y + 2, 16, 20);
+
+    // Embed signature image if available
+    if (firmaCliente?.dataUrl) {
+      try {
+        // Calculate signature dimensions to fit within the box (leaving space for fingerprint)
+        const sigAreaWidth = sigBoxWidth - 25; // Leave space for fingerprint box
+        const sigAreaHeight = 20;
+        const sigX = this.margin + 2;
+        const sigY = this.y + 2;
+
+        this.pdf.addImage(
+          firmaCliente.dataUrl,
+          'PNG',
+          sigX,
+          sigY,
+          sigAreaWidth,
+          sigAreaHeight,
+          undefined,
+          'FAST'
+        );
+      } catch (error) {
+        console.error('Error adding signature to PDF:', error);
+      }
+    }
 
     this.pdf.setFontSize(8);
     this.pdf.setFont('helvetica', 'bold');
